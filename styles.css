@@ -633,6 +633,10 @@ h2 {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.track-link {
+  cursor: pointer;
+}
+
 .track-step {
   display: inline-block;
   margin-bottom: 14px;

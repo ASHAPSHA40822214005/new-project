@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Log in — Codecraft</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="../index.html">
+        <div class="brand-mark">&lt;/&gt;</div>
+        <span>Codecraft</span>
+      </a>
+    </header>
+
+    <main style="padding:48px 0;">
+      <section style="max-width:760px;margin:0 auto;background:var(--surface-strong);padding:28px;border-radius:16px;border:1px solid rgba(216,221,231,0.9);">
+        <h2 style="margin-top:0">Welcome back</h2>
+        <p style="color:var(--muted);margin-top:6px;">Sign in to your account or create a new one.</p>
+
+        <div style="display:flex;gap:18px;margin-top:18px;flex-wrap:wrap;">
+          <button id="google-signin" class="button" style="background:#4285F4;border:none;">Sign in with Google</button>
+          <div style="flex:1;min-width:220px;display:flex;align-items:center;justify-content:center;color:var(--muted);">or</div>
+        </div>
+
+        <form id="login-form" style="margin-top:18px;display:grid;gap:12px;">
+          <input id="login-username" placeholder="Username or email" required style="padding:12px;border-radius:10px;border:1px solid var(--line);" />
+          <input id="login-password" type="password" placeholder="Password" required style="padding:12px;border-radius:10px;border:1px solid var(--line);" />
+          <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;">
+            <label style="color:var(--muted);font-weight:600"><input id="remember" type="checkbox" /> Remember me</label>
+            <a href="#" style="color:var(--primary);font-weight:700">Forgot?</a>
+          </div>
+          <button type="submit" class="button" style="width:100%;">Log in</button>
+          <div id="login-msg" style="color:#b22222;font-weight:700;display:none"></div>
+        </form>
+
+        <p style="text-align:center;color:var(--muted);margin-top:14px;">Don't have an account? <a href="./signup.html" style="color:var(--primary);font-weight:700;">Sign up here</a></p>
+      </section>
+    </main>
+
+    <footer class="footer" style="margin-top:28px">
+      <div class="lg-container">
+        <p class="footer-note">Accounts are stored locally for this demo. "Google" sign in is simulated.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="auth.js"></script>
+</body>
+</html>

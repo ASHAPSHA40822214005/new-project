@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Sign up — Codecraft</title>
+  <link rel="stylesheet" href="../styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="../index.html">
+        <div class="brand-mark">&lt;/&gt;</div>
+        <span>Codecraft</span>
+      </a>
+      <nav class="nav">
+        <a href="../index.html">Home</a>
+        <a href="./login.html">Log in</a>
+      </nav>
+    </header>
+
+    <main style="padding:48px 0;">
+      <section style="max-width:560px;margin:0 auto;background:var(--surface-strong);padding:28px;border-radius:16px;border:1px solid rgba(216,221,231,0.9);">
+        <h2 style="margin-top:0">Create your free account</h2>
+        <p style="color:var(--muted);margin-top:6px;">Join thousands of developers learning to code.</p>
+
+        <form id="signup-form" style="margin-top:20px;display:grid;gap:14px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+            <div>
+              <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">First name *</label>
+              <input id="first-name" type="text" placeholder="John" required style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
+            </div>
+            <div>
+              <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Last name</label>
+              <input id="last-name" type="text" placeholder="Doe" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
+            </div>
+          </div>
+
+          <div>
+            <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Email *</label>
+            <input id="email" type="email" placeholder="you@example.com" required style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
+          </div>
+
+          <div>
+            <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Phone number *</label>
+            <input id="phone" type="tel" placeholder="+1 (555) 000-0000" required style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
+          </div>
+
+          <div>
+            <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Username *</label>
+            <input id="username" type="text" placeholder="johndoe42" required style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
+          </div>
+
+          <div>
+            <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Password *</label>
+            <input id="password" type="password" placeholder="••••••••" required style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
+          </div>
+
+          <button type="submit" class="button" style="width:100%;margin-top:8px;">Create account</button>
+          <div id="signup-msg" style="color:#b22222;font-weight:700;display:none;text-align:center;"></div>
+        </form>
+
+        <hr style="margin:18px 0;border:none;border-top:1px solid var(--line);">
+
+        <button id="google-signup" class="button" style="width:100%;background:#4285F4;border:none;margin-bottom:12px;">Sign up with Google</button>
+
+        <p style="text-align:center;color:var(--muted);margin:0;">Already have an account? <a href="./login.html" style="color:var(--primary);font-weight:700;">Log in</a></p>
+      </section>
+    </main>
+
+    <footer class="footer" style="margin-top:28px">
+      <div class="lg-container">
+        <p class="footer-note">* Required fields. Your data is securely stored.</p>
+      </div>
+    </footer>
+  </div>
+
+  <script src="auth.js"></script>
+</body>
+</html>
