@@ -17,3 +17,23 @@ for (const link of routeLinks) {
 window.addEventListener("popstate", () => {
   window.location.assign(window.location.pathname);
 });
+
+// Animate language badges on click then navigate
+document.querySelectorAll('.language-badge').forEach(b => {
+  b.addEventListener('click', (ev) => {
+    // If clicked on a child element, find the closest anchor
+    const anchor = ev.currentTarget;
+    const href = anchor.getAttribute('href');
+    if (!href) return;
+    ev.preventDefault();
+    // add animation class
+    anchor.classList.remove('animate-badge');
+    // force reflow
+    void anchor.offsetWidth;
+    anchor.classList.add('animate-badge');
+    // navigate after animation completes
+    setTimeout(() => {
+      window.location.href = href;
+    }, 420);
+  });
+});

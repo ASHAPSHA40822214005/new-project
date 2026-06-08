@@ -52,6 +52,80 @@ function hideMessage(elementId) {
   }
 }
 
+let contactVerified = false;
+let currentOtpContact = '';
+let currentContactType = 'email';
+
+function getSelectedContactType() {
+  const emailRadio = document.getElementById('contact-method-email');
+  return emailRadio?.checked ? 'email' : 'phone';
+}
+
+function getContactValue() {
+  const type = getSelectedContactType();
+  return type === 'phone'
+    ? `${document.getElementById('phone-code')?.value || ''}${document.getElementById('phone-number')?.value || ''}`.trim()
+    : document.getElementById('email')?.value.trim();
+}
+
+function setContactVerificationState(isVerified) {
+  contactVerified = isVerified;
+  const contactValid = document.getElementById('contact-valid');
+  const otpSuccess = document.getElementById('otp-success');
+  if (contactValid) {
+    contactValid.style.display = isVerified ? 'block' : 'none';
+  }
+  if (otpSuccess) {
+    otpSuccess.style.display = isVerified ? 'block' : 'none';
+  }
+}
+
+function setOtpPanelVisible(show) {
+  const otpActions = document.getElementById('otp-actions');
+  const otpPanel = document.getElementById('otp-panel');
+  if (otpActions) otpActions.style.display = show ? 'flex' : 'none';
+  if (!show && otpPanel) otpPanel.style.display = 'none';
+}
+
+function resetOtpState() {
+  currentOtpContact = '';
+  currentContactType = getSelectedContactType();
+  setContactVerificationState(false);
+  hideMessage('contact-error');
+  hideMessage('otp-error');
+  hideMessage('otp-success');
+  hideMessage('otp-sent-msg');
+  const otpPanel = document.getElementById('otp-panel');
+  if (otpPanel) otpPanel.style.display = 'none';
+}
+
+function setInputValidationState(input, valid) {
+  if (!input) return;
+  if (valid) {
+    input.classList.add('valid-input');
+  } else {
+    input.classList.remove('valid-input');
+  }
+}
+
+function validatePhoneNumber(phone) {
+  const cleaned = phone.replace(/\D/g, '');
+  return cleaned.length >= 8 && cleaned.length <= 15;
+}
+
+function validateContact(contact, type) {
+  if (!contact) {
+    return { valid: false, error: type === 'phone' ? 'Phone number is required' : 'Email is required' };
+  }
+  if (type === 'email') {
+    return validateEmail(contact);
+  }
+  if (!validatePhoneNumber(contact)) {
+    return { valid: false, error: 'Enter a valid phone number' };
+  }
+  return { valid: true };
+}
+
 // Generate username suggestions from email
 function generateUsernameSuggestions(email) {
   const base = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
@@ -286,36 +360,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Setup real-time validation for signup form
 function setupSignupValidation() {
-  // Email validation
   const emailInput = document.getElementById('email');
-  if (emailInput) {
-    emailInput.addEventListener('blur', () => {
-      const result = validateEmail(emailInput.value);
-      if (!result.valid) {
-        showMessage('email-error', result.error, true);
-        document.getElementById('username-suggestions').style.display = 'none';
-      } else {
-        hideMessage('email-error');
-        // Generate username suggestions
-        const suggestions = generateUsernameSuggestions(emailInput.value);
-        showUsernameSuggestions(suggestions);
-      }
-    });
-    emailInput.addEventListener('input', () => {
-      if (emailInput.value.trim()) {
-        const result = validateEmail(emailInput.value);
-        if (!result.valid) {
-          showMessage('email-error', result.error, true);
-          document.getElementById('username-suggestions').style.display = 'none';
-        } else {
-          hideMessage('email-error');
-          // Generate username suggestions on typing
-          const suggestions = generateUsernameSuggestions(emailInput.value);
-          showUsernameSuggestions(suggestions);
-        }
-      }
-    });
+  const phoneNumberInput = document.getElementById('phone-number');
+  const phoneCodeSelect = document.getElementById('phone-code');
+  const contactEmailRow = document.getElementById('contact-email-row');
+  const contactPhoneRow = document.getElementById('contact-phone-row');
+  const contactMethodEmail = document.getElementById('contact-method-email');
+  const contactMethodPhone = document.getElementById('contact-method-phone');
+
+  function updateContactMode() {
+    const type = getSelectedContactType();
+    currentContactType = type;
+    if (type === 'email') {
+      contactEmailRow.style.display = 'block';
+      contactPhoneRow.style.display = 'none';
+    } else {
+      contactEmailRow.style.display = 'none';
+      contactPhoneRow.style.display = 'block';
+    }
+    resetOtpState();
+    hideMessage('contact-error');
+    if (type === 'email') {
+      setInputValidationState(emailInput, false);
+    } else {
+      setInputValidationState(phoneNumberInput, false);
+    }
   }
+
+  if (contactMethodEmail) contactMethodEmail.addEventListener('change', updateContactMode);
+  if (contactMethodPhone) contactMethodPhone.addEventListener('change', updateContactMode);
+
+  const contactInput = () => getSelectedContactType() === 'email' ? emailInput : phoneNumberInput;
+
+  const validateContactInput = () => {
+    const type = getSelectedContactType();
+    const value = getContactValue();
+    const result = validateContact(value, type);
+    const contactErrorId = 'contact-error';
+    if (!result.valid) {
+      showMessage(contactErrorId, result.error, true);
+      if (type === 'email') {
+        setInputValidationState(emailInput, false);
+      } else {
+        setInputValidationState(phoneNumberInput, false);
+      }
+      setOtpPanelVisible(false);
+      resetOtpState();
+      return false;
+    }
+    hideMessage(contactErrorId);
+    setInputValidationState(contactInput(), true);
+    setOtpPanelVisible(true);
+    return true;
+  };
+
+  if (emailInput) {
+    emailInput.addEventListener('input', validateContactInput);
+    emailInput.addEventListener('blur', validateContactInput);
+  }
+  if (phoneNumberInput) {
+    phoneNumberInput.addEventListener('input', validateContactInput);
+    phoneNumberInput.addEventListener('blur', validateContactInput);
+    phoneCodeSelect?.addEventListener('change', validateContactInput);
+  }
+
+  // Username validation
 
   // Username validation
   const usernameInput = document.getElementById('username');
@@ -325,9 +434,11 @@ function setupSignupValidation() {
       if (!result.valid) {
         showMessage('username-error', result.error, true);
         hideMessage('username-valid');
+        setInputValidationState(usernameInput, false);
       } else {
         hideMessage('username-error');
         showMessage('username-valid', '✓ Username available', false);
+        setInputValidationState(usernameInput, true);
       }
     });
     usernameInput.addEventListener('blur', () => {
@@ -344,6 +455,88 @@ function setupSignupValidation() {
       const usernameInput = document.getElementById('username');
       if (usernameInput) {
         usernameInput.focus();
+      }
+    });
+  }
+
+  const sendOtpButton = document.getElementById('send-otp');
+  const verifyOtpButton = document.getElementById('verify-otp');
+  const otpCodeInput = document.getElementById('otp-code');
+  const otpSentMsg = document.getElementById('otp-sent-msg');
+  const contactError = 'contact-error';
+
+  if (sendOtpButton && otpCodeInput) {
+    sendOtpButton.addEventListener('click', async () => {
+      const type = getSelectedContactType();
+      const contact = getContactValue();
+      const result = validateContact(contact, type);
+      if (!contact || !result.valid) {
+        showMessage(contactError, result.error, true);
+        return;
+      }
+      hideMessage(contactError);
+      hideMessage('otp-error');
+      hideMessage('otp-success');
+      if (otpSentMsg) {
+        otpSentMsg.style.display = 'none';
+      }
+
+      try {
+        const response = await fetch(`${API_URL}/auth/send-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, contact })
+        });
+        const data = await response.json();
+        if (data.success) {
+          currentOtpContact = contact;
+          currentContactType = type;
+          if (otpSentMsg) {
+            otpSentMsg.textContent = type === 'phone' ? 'OTP sent to your phone' : 'OTP sent to your email';
+            otpSentMsg.style.display = 'inline-flex';
+          }
+          const otpPanel = document.getElementById('otp-panel');
+          if (otpPanel) otpPanel.style.display = 'block';
+        } else {
+          showMessage('otp-error', data.error || 'Unable to send OTP', true);
+        }
+      } catch (err) {
+        console.error('Send OTP error:', err);
+        showMessage('otp-error', 'Network error sending OTP', true);
+      }
+    });
+  }
+
+  if (verifyOtpButton) {
+    verifyOtpButton.addEventListener('click', async () => {
+      const type = getSelectedContactType();
+      const contact = getContactValue();
+      const code = otpCodeInput?.value.trim();
+      if (!contact || !code) {
+        showMessage('otp-error', 'Enter the OTP code to verify', true);
+        return;
+      }
+      hideMessage('otp-error');
+
+      try {
+        const response = await fetch(`${API_URL}/auth/verify-otp`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, contact, code })
+        });
+        const data = await response.json();
+        if (data.success) {
+          setContactVerificationState(true);
+          showMessage('otp-success', '✓ OTP verified', false);
+          if (otpSentMsg) otpSentMsg.style.display = 'none';
+        } else {
+          showMessage('otp-error', data.error || 'OTP verification failed', true);
+          setContactVerificationState(false);
+        }
+      } catch (err) {
+        console.error('Verify OTP error:', err);
+        showMessage('otp-error', 'Network error verifying OTP', true);
+        setContactVerificationState(false);
       }
     });
   }
@@ -369,6 +562,7 @@ function setupSignupValidation() {
         criteriaContainer.style.display = 'block';
         strengthEl.style.display = 'block';
         strengthBar.style.width = result.strength + '%';
+        setInputValidationState(passwordInput, criteria.allValid);
         
         // Update criteria icons
         lengthItem.firstElementChild.textContent = criteria.length ? '✓' : '✕';
@@ -419,6 +613,7 @@ function setupSignupValidation() {
         strengthEl.style.display = 'none';
         hideMessage('password-error');
         verified.style.display = 'none';
+        setInputValidationState(passwordInput, false);
       }
     });
   }
@@ -445,13 +640,14 @@ async function handleSignup(e) {
   
   const firstName = document.getElementById('first-name')?.value;
   const lastName = document.getElementById('last-name')?.value;
-  const email = document.getElementById('email')?.value;
   const username = document.getElementById('username')?.value;
   const password = document.getElementById('password')?.value;
+  const contactType = getSelectedContactType();
+  const contact = getContactValue();
 
   // Validate all fields
   const firstNameVal = validateFirstName(firstName);
-  const emailVal = validateEmail(email);
+  const contactVal = validateContact(contact, contactType);
   const usernameVal = validateUsername(username);
   const passwordVal = validatePassword(password);
 
@@ -460,8 +656,8 @@ async function handleSignup(e) {
     showMessage('first-name-error', firstNameVal.error, true);
     return;
   }
-  if (!emailVal.valid) {
-    showMessage('email-error', emailVal.error, true);
+  if (!contactVal.valid) {
+    showMessage('contact-error', contactVal.error, true);
     return;
   }
   if (!usernameVal.valid) {
@@ -472,6 +668,10 @@ async function handleSignup(e) {
     showMessage('password-error', passwordVal.error, true);
     return;
   }
+  if (!contactVerified) {
+    showMessage('contact-error', 'Please verify your email or phone with OTP before signing up', true);
+    return;
+  }
 
   try {
     const response = await fetch(`${API_URL}/auth/signup`, {
@@ -480,9 +680,10 @@ async function handleSignup(e) {
       body: JSON.stringify({
         firstName,
         lastName,
-        email,
         username,
-        password
+        password,
+        contactType,
+        contact
       })
     });
 

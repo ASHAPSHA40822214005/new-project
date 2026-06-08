@@ -139,6 +139,34 @@ a {
   box-shadow: none;
 }
 
+.valid-input {
+  border-color: #228B22 !important;
+  box-shadow: 0 0 0 3px rgba(34, 139, 34, 0.12);
+  animation: validation-pop 0.18s ease-out;
+}
+
+.validation-ok,
+.validation-msg {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #228B22;
+  animation: validation-pop 0.18s ease-out;
+}
+
+@keyframes validation-pop {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .hero {
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
@@ -456,12 +484,82 @@ h2 {
   --badge-fill: #ffffff;
   display: grid;
   place-items: center;
+  position: relative;
   width: 76px;
   height: 86px;
   margin-bottom: 14px;
   clip-path: polygon(50% 0%, 92% 24%, 92% 76%, 50% 100%, 8% 76%, 8% 24%);
   background: var(--badge-color);
   filter: drop-shadow(0 6px 10px rgba(23, 50, 77, 0.14));
+}
+
+/* small logo inside the badge */
+.badge-logo {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.95);
+  display: inline-grid;
+  place-items: center;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--badge-color);
+  box-shadow: 0 6px 12px rgba(23,50,77,0.08);
+}
+
+.badge-logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 6px;
+}
+
+/* full-size logo inside badge core */
+.badge-core img.full-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  border-radius: 8px;
+}
+
+/* visually hide the textual mark but keep for accessibility */
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+.badge-core .badge-mark {
+  display: none;
+}
+
+/* click/tap animation */
+@keyframes badge-pop {
+  0% { transform: scale(1) rotate(0deg); }
+  30% { transform: scale(1.14) rotate(-6deg); }
+  60% { transform: scale(0.98) rotate(4deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.animate-badge {
+  animation: badge-pop 420ms cubic-bezier(.2,.9,.3,1);
+}
+
+/* small pulse when hovering */
+.language-badge:hover {
+  transform: translateY(-6px);
+  transition: transform 220ms ease;
 }
 
 .badge-core {
