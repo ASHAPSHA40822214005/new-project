@@ -1,5 +1,18 @@
 const API_URL = 'http://localhost:3001/api';
 
+// Validation regexes and rules
+const VALIDATION = {
+  email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+  username: /^[a-zA-Z0-9_]{3,20}$/,
+  password: {
+    minLength: 8,
+    hasUppercase: /[A-Z]/,
+    hasLowercase: /[a-z]/,
+    hasNumber: /[0-9]/,
+    hasSpecial: /[!@#$%^&*]/
+  }
+};
+
 // Load token from localStorage
 function getToken() {
   return localStorage.getItem('cf_token');
@@ -32,6 +45,182 @@ function showMessage(elementId, message, isError = true) {
   }
 }
 
+function hideMessage(elementId) {
+  const el = document.getElementById(elementId);
+  if (el) {
+    el.style.display = 'none';
+  }
+}
+
+// Generate username suggestions from email
+function generateUsernameSuggestions(email) {
+  const base = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
+  const suggestions = [];
+  
+  // Suggestion 1: base name only
+  if (base.length >= 3 && base.length <= 20) {
+    suggestions.push(base);
+  }
+  
+  // Suggestion 2: base + random 2 digits
+  suggestions.push(base.slice(0, 15) + Math.floor(Math.random() * 99).toString().padStart(2, '0'));
+  
+  // Suggestion 3: base + underscore + random
+  if (base.length <= 15) {
+    suggestions.push(base + '_' + Math.floor(Math.random() * 9999).toString().padStart(4, '0'));
+  }
+  
+  // Suggestion 4: base + short random string
+  const randomStr = Math.random().toString(36).substring(2, 6);
+  suggestions.push((base + randomStr).slice(0, 20));
+  
+  // Suggestion 5: base + another variation
+  suggestions.push(base.slice(0, 10) + Math.floor(Math.random() * 9).toString() + '_dev');
+  
+  // Filter valid suggestions and remove duplicates
+  return [...new Set(
+    suggestions.filter(s => 
+      s.length >= 3 && 
+      s.length <= 20 && 
+      /^[a-zA-Z0-9_]+$/.test(s)
+    )
+  )].slice(0, 4); // Return max 4 suggestions
+}
+
+// Display username suggestions
+function showUsernameSuggestions(suggestions) {
+  const container = document.getElementById('username-suggestions');
+  const grid = document.getElementById('suggestions-grid');
+  
+  if (suggestions.length === 0) {
+    container.style.display = 'none';
+    return;
+  }
+  
+  grid.innerHTML = suggestions.map(s => 
+    `<button type="button" class="suggestion-btn" style="padding:6px 10px;background:#fff;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;transition:all 0.2s;" onclick="selectUsername('${s}')">
+      ${s}
+    </button>`
+  ).join('');
+  
+  container.style.display = 'block';
+}
+
+function selectUsername(username) {
+  const input = document.getElementById('username');
+  input.value = username;
+  input.focus();
+  
+  // Validate immediately
+  const result = validateUsername(username);
+  if (!result.valid) {
+    showMessage('username-error', result.error, true);
+    hideMessage('username-valid');
+  } else {
+    hideMessage('username-error');
+    showMessage('username-valid', '✓ Username available', false);
+  }
+}
+
+function validateEmail(email) {
+  if (!email) {
+    return { valid: false, error: 'Email is required' };
+  }
+  if (!VALIDATION.email.test(email)) {
+    return { valid: false, error: 'Invalid email format (e.g., user@example.com)' };
+  }
+  return { valid: true };
+}
+
+function validateUsername(username) {
+  if (!username) {
+    return { valid: false, error: 'Username is required' };
+  }
+  if (username.length < 3) {
+    return { valid: false, error: 'Username must be at least 3 characters' };
+  }
+  if (username.length > 20) {
+    return { valid: false, error: 'Username must be 20 characters or less' };
+  }
+  if (!VALIDATION.username.test(username)) {
+    return { valid: false, error: 'Username can only contain letters, numbers, and underscores' };
+  }
+  return { valid: true };
+}
+
+function getPasswordCriteria(password) {
+  const length = password.length >= VALIDATION.password.minLength;
+  const lower = VALIDATION.password.hasLowercase.test(password);
+  const upper = VALIDATION.password.hasUppercase.test(password);
+  const number = VALIDATION.password.hasNumber.test(password);
+  const special = VALIDATION.password.hasSpecial.test(password);
+  return {
+    length,
+    lower,
+    upper,
+    number,
+    special,
+    allValid: length && lower && upper && number && special
+  };
+}
+
+function validatePassword(password) {
+  if (!password) {
+    return { valid: false, error: 'Password is required', strength: 0 };
+  }
+  
+  let strength = 0;
+  let errors = [];
+  
+  const criteria = getPasswordCriteria(password);
+  
+  if (!criteria.length) {
+    errors.push(`at least ${VALIDATION.password.minLength} characters`);
+  } else {
+    strength += 20;
+  }
+  
+  if (!criteria.upper) {
+    errors.push('one uppercase letter');
+  } else {
+    strength += 20;
+  }
+  
+  if (!criteria.lower) {
+    errors.push('one lowercase letter');
+  } else {
+    strength += 20;
+  }
+  
+  if (!criteria.number) {
+    errors.push('one number');
+  } else {
+    strength += 20;
+  }
+  
+  if (!criteria.special) {
+    errors.push('one special character');
+  } else {
+    strength += 20;
+  }
+  
+  if (errors.length > 0) {
+    const errorText = errors.join(', ');
+    return { valid: false, error: `Add: ${errorText}`, strength };
+  }
+  
+  return { valid: true, strength: 100 };
+}
+
+function validateFirstName(firstName) {
+  if (!firstName || firstName.trim() === '') {
+    return { valid: false, error: 'First name is required' };
+  }
+  return { valid: true };
+}
+
+
+
 // Check if already logged in on page load
 document.addEventListener('DOMContentLoaded', () => {
   const token = getToken();
@@ -51,6 +240,9 @@ document.addEventListener('DOMContentLoaded', () => {
     document.body.insertBefore(banner, document.body.firstChild);
   }
 
+  // Setup signup form validation
+  setupSignupValidation();
+
   // Handle signup form
   const signupForm = document.getElementById('signup-form');
   if (signupForm) {
@@ -63,6 +255,13 @@ document.addEventListener('DOMContentLoaded', () => {
     signupClear.addEventListener('click', (e) => {
       e.preventDefault();
       signupForm.reset();
+      hideMessage('signup-msg');
+      hideMessage('email-error');
+      hideMessage('username-error');
+      hideMessage('username-valid');
+      hideMessage('password-error');
+      hideMessage('password-strength');
+      hideMessage('first-name-error');
     });
   }
 
@@ -85,6 +284,161 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
+// Setup real-time validation for signup form
+function setupSignupValidation() {
+  // Email validation
+  const emailInput = document.getElementById('email');
+  if (emailInput) {
+    emailInput.addEventListener('blur', () => {
+      const result = validateEmail(emailInput.value);
+      if (!result.valid) {
+        showMessage('email-error', result.error, true);
+        document.getElementById('username-suggestions').style.display = 'none';
+      } else {
+        hideMessage('email-error');
+        // Generate username suggestions
+        const suggestions = generateUsernameSuggestions(emailInput.value);
+        showUsernameSuggestions(suggestions);
+      }
+    });
+    emailInput.addEventListener('input', () => {
+      if (emailInput.value.trim()) {
+        const result = validateEmail(emailInput.value);
+        if (!result.valid) {
+          showMessage('email-error', result.error, true);
+          document.getElementById('username-suggestions').style.display = 'none';
+        } else {
+          hideMessage('email-error');
+          // Generate username suggestions on typing
+          const suggestions = generateUsernameSuggestions(emailInput.value);
+          showUsernameSuggestions(suggestions);
+        }
+      }
+    });
+  }
+
+  // Username validation
+  const usernameInput = document.getElementById('username');
+  if (usernameInput) {
+    usernameInput.addEventListener('input', () => {
+      const result = validateUsername(usernameInput.value);
+      if (!result.valid) {
+        showMessage('username-error', result.error, true);
+        hideMessage('username-valid');
+      } else {
+        hideMessage('username-error');
+        showMessage('username-valid', '✓ Username available', false);
+      }
+    });
+    usernameInput.addEventListener('blur', () => {
+      if (!usernameInput.value.trim()) {
+        hideMessage('username-error');
+        hideMessage('username-valid');
+      }
+    });
+  }
+
+  const editUsernameButton = document.getElementById('edit-username');
+  if (editUsernameButton) {
+    editUsernameButton.addEventListener('click', () => {
+      const usernameInput = document.getElementById('username');
+      if (usernameInput) {
+        usernameInput.focus();
+      }
+    });
+  }
+
+  // Password strength indicator
+  const passwordInput = document.getElementById('password');
+  if (passwordInput) {
+    passwordInput.addEventListener('input', () => {
+      const result = validatePassword(passwordInput.value);
+      const strengthEl = document.getElementById('password-strength');
+      const strengthBar = document.getElementById('password-strength-bar');
+      const strengthText = document.getElementById('password-strength-text');
+      const criteria = getPasswordCriteria(passwordInput.value);
+      const criteriaContainer = document.getElementById('password-criteria');
+      const lengthItem = document.getElementById('password-criteria-length');
+      const lowerItem = document.getElementById('password-criteria-lower');
+      const upperItem = document.getElementById('password-criteria-upper');
+      const numberItem = document.getElementById('password-criteria-number');
+      const specialItem = document.getElementById('password-criteria-special');
+      const verified = document.getElementById('password-verified');
+      
+      if (passwordInput.value) {
+        criteriaContainer.style.display = 'block';
+        strengthEl.style.display = 'block';
+        strengthBar.style.width = result.strength + '%';
+        
+        // Update criteria icons
+        lengthItem.firstElementChild.textContent = criteria.length ? '✓' : '✕';
+        lengthItem.style.color = criteria.length ? '#228B22' : '#b22222';
+        lowerItem.firstElementChild.textContent = criteria.lower ? '✓' : '✕';
+        lowerItem.style.color = criteria.lower ? '#228B22' : '#b22222';
+        upperItem.firstElementChild.textContent = criteria.upper ? '✓' : '✕';
+        upperItem.style.color = criteria.upper ? '#228B22' : '#b22222';
+        numberItem.firstElementChild.textContent = criteria.number ? '✓' : '✕';
+        numberItem.style.color = criteria.number ? '#228B22' : '#b22222';
+        specialItem.firstElementChild.textContent = criteria.special ? '✓' : '✕';
+        specialItem.style.color = criteria.special ? '#228B22' : '#b22222';
+
+        if (criteria.allValid) {
+          strengthBar.style.background = '#228B22';
+          strengthText.textContent = 'Strong ✓';
+          strengthText.style.color = '#228B22';
+          verified.style.display = 'block';
+        } else if (result.strength < 25) {
+          strengthBar.style.background = '#b22222';
+          strengthText.textContent = 'Very weak';
+          strengthText.style.color = '#b22222';
+          verified.style.display = 'none';
+        } else if (result.strength < 50) {
+          strengthBar.style.background = '#ff7a59';
+          strengthText.textContent = 'Weak';
+          strengthText.style.color = '#ff7a59';
+          verified.style.display = 'none';
+        } else if (result.strength < 75) {
+          strengthBar.style.background = '#ffc107';
+          strengthText.textContent = 'Fair';
+          strengthText.style.color = '#ffc107';
+          verified.style.display = 'none';
+        } else {
+          strengthBar.style.background = '#66bb6a';
+          strengthText.textContent = 'Good';
+          strengthText.style.color = '#66bb6a';
+          verified.style.display = 'none';
+        }
+        
+        if (!result.valid && result.error) {
+          showMessage('password-error', result.error, true);
+        } else {
+          hideMessage('password-error');
+        }
+      } else {
+        criteriaContainer.style.display = 'none';
+        strengthEl.style.display = 'none';
+        hideMessage('password-error');
+        verified.style.display = 'none';
+      }
+    });
+  }
+
+  // First name validation
+  const firstNameInput = document.getElementById('first-name');
+  if (firstNameInput) {
+    firstNameInput.addEventListener('blur', () => {
+      const result = validateFirstName(firstNameInput.value);
+      if (!result.valid) {
+        showMessage('first-name-error', result.error, true);
+      } else {
+        hideMessage('first-name-error');
+      }
+    });
+  }
+
+
+}
+
 // Handle signup
 async function handleSignup(e) {
   e.preventDefault();
@@ -92,13 +446,30 @@ async function handleSignup(e) {
   const firstName = document.getElementById('first-name')?.value;
   const lastName = document.getElementById('last-name')?.value;
   const email = document.getElementById('email')?.value;
-  const phone = document.getElementById('phone')?.value;
   const username = document.getElementById('username')?.value;
   const password = document.getElementById('password')?.value;
 
-  // Validation
-  if (!firstName || !email || !phone || !username || !password) {
-    showMessage('signup-msg', 'All required fields must be filled', true);
+  // Validate all fields
+  const firstNameVal = validateFirstName(firstName);
+  const emailVal = validateEmail(email);
+  const usernameVal = validateUsername(username);
+  const passwordVal = validatePassword(password);
+
+  // Show validation errors
+  if (!firstNameVal.valid) {
+    showMessage('first-name-error', firstNameVal.error, true);
+    return;
+  }
+  if (!emailVal.valid) {
+    showMessage('email-error', emailVal.error, true);
+    return;
+  }
+  if (!usernameVal.valid) {
+    showMessage('username-error', usernameVal.error, true);
+    return;
+  }
+  if (!passwordVal.valid) {
+    showMessage('password-error', passwordVal.error, true);
     return;
   }
 
@@ -110,7 +481,6 @@ async function handleSignup(e) {
         firstName,
         lastName,
         email,
-        phone,
         username,
         password
       })

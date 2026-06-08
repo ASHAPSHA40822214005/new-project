@@ -49,36 +49,43 @@ function generateToken() {
   return Math.random().toString(36).substr(2) + Date.now().toString(36);
 }
 
-function validateEmail(email) {
+function validateSignupInput(email, username, firstName, password) {
+  // Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailRegex.test(email);
+  if (!email || !emailRegex.test(email)) {
+    return { valid: false, error: 'Invalid email format' };
+  }
+
+  // Username validation: 3-20 chars, letters/numbers/underscores only
+  const usernameRegex = /^[a-zA-Z0-9_]{3,20}$/;
+  if (!username || !usernameRegex.test(username)) {
+    return { valid: false, error: 'Username must be 3-20 characters (letters, numbers, underscores only)' };
+  }
+
+  // First name validation
+  if (!firstName || firstName.trim() === '') {
+    return { valid: false, error: 'First name is required' };
+  }
+
+  // Password validation: minimum 8 characters
+  if (!password || password.length < 8) {
+    return { valid: false, error: 'Password must be at least 8 characters' };
+  }
+
+  return { valid: true };
 }
 
-function validatePassword(password) {
-  return password && password.length >= 6;
-}
 
 // API Routes
 
 // POST /api/auth/signup - Create new account
 app.post('/api/auth/signup', async (req, res) => {
-  const { email, username, firstName, lastName, phone, password } = req.body;
+  const { email, username, firstName, lastName, password } = req.body;
 
   // Validation
-  if (!email || !validateEmail(email)) {
-    return res.status(400).json({ success: false, error: 'Invalid email' });
-  }
-  if (!username || username.length < 3) {
-    return res.status(400).json({ success: false, error: 'Username must be at least 3 characters' });
-  }
-  if (!firstName) {
-    return res.status(400).json({ success: false, error: 'First name is required' });
-  }
-  if (!phone) {
-    return res.status(400).json({ success: false, error: 'Phone number is required' });
-  }
-  if (!validatePassword(password)) {
-    return res.status(400).json({ success: false, error: 'Password must be at least 6 characters' });
+  const validation = validateSignupInput(email, username, firstName, password);
+  if (!validation.valid) {
+    return res.status(400).json({ success: false, error: validation.error });
   }
 
   try {
@@ -87,13 +94,17 @@ app.post('/api/auth/signup', async (req, res) => {
 
     // Insert user into database
     db.run(
-      `INSERT INTO users (email, username, firstName, lastName, phone, passwordHash)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [email, username, firstName, lastName || '', phone, passwordHash],
+      `INSERT INTO users (email, username, firstName, lastName, passwordHash)
+       VALUES (?, ?, ?, ?, ?)`,
+      [email, username, firstName, lastName || '', passwordHash],
       function(err) {
         if (err) {
           if (err.message.includes('UNIQUE constraint failed')) {
-            return res.status(400).json({ success: false, error: 'Email or username already exists' });
+            if (err.message.includes('email')) {
+              return res.status(400).json({ success: false, error: 'This email is already registered' });
+            } else if (err.message.includes('username')) {
+              return res.status(400).json({ success: false, error: 'Username already taken' });
+            }
           }
           console.error('Insert error:', err);
           return res.status(500).json({ success: false, error: 'Database error' });

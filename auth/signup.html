@@ -29,31 +29,56 @@
             <div>
               <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">First name *</label>
               <input id="first-name" type="text" placeholder="John" required style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
+              <div id="first-name-error" style="color:#b22222;font-size:12px;margin-top:4px;display:none;"></div>
             </div>
             <div>
               <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Last name</label>
               <input id="last-name" type="text" placeholder="Doe" style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
+              <div id="last-name-error" style="color:#b22222;font-size:12px;margin-top:4px;display:none;"></div>
             </div>
           </div>
 
           <div>
-            <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Email *</label>
+            <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Email * <span style="font-weight:400;color:var(--muted);">must be valid</span></label>
             <input id="email" type="email" placeholder="you@example.com" required style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
+            <div id="email-error" style="color:#b22222;font-size:12px;margin-top:4px;display:none;"></div>
           </div>
 
-          <div>
-            <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Phone number *</label>
-            <input id="phone" type="tel" placeholder="+1 (555) 000-0000" required style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
-          </div>
+
 
           <div>
-            <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Username *</label>
+            <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Username * <span style="font-weight:400;color:var(--muted);">3-20 chars, letters/numbers/_</span></label>
             <input id="username" type="text" placeholder="johndoe42" required style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;gap:10px;flex-wrap:wrap;">
+              <span style="font-size:12px;color:var(--muted);">Click a suggestion, then edit it if you want.</span>
+              <button id="edit-username" type="button" style="padding:6px 10px;background:var(--surface);border:1px solid var(--line);border-radius:8px;color:var(--ink);font-size:12px;cursor:pointer;">Edit username</button>
+            </div>
+            <div id="username-suggestions" style="display:none;margin-top:8px;padding:8px;background:#f5f5f5;border-radius:8px;">
+              <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:6px;">Suggestions:</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;" id="suggestions-grid"></div>
+            </div>
+            <div id="username-error" style="color:#b22222;font-size:12px;margin-top:4px;display:none;"></div>
+            <div id="username-valid" style="color:#228B22;font-size:12px;margin-top:4px;display:none;font-weight:600;">✓ Username available</div>
           </div>
 
           <div>
-            <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Password *</label>
+            <label style="display:block;font-weight:700;margin-bottom:6px;color:var(--ink);">Password * <span style="font-weight:400;color:var(--muted);">min 8 chars, uppercase, lowercase, number, special char</span></label>
             <input id="password" type="password" placeholder="••••••••" required style="width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);" />
+            <div id="password-strength" style="margin-top:6px;display:none;">
+              <div style="height:4px;background:#e0e0e0;border-radius:2px;overflow:hidden;">
+                <div id="password-strength-bar" style="height:100%;background:#b22222;width:0%;transition:all 0.3s;"></div>
+              </div>
+              <div id="password-strength-text" style="font-size:12px;margin-top:4px;color:var(--muted);"></div>
+            </div>
+            <div id="password-criteria" style="display:none;margin-top:12px;font-size:13px;line-height:1.6;color:var(--muted);">
+              <div id="password-criteria-length" style="display:flex;align-items:center;gap:8px;"><span>✕</span>At least 8 characters</div>
+              <div id="password-criteria-lower" style="display:flex;align-items:center;gap:8px;"><span>✕</span>Lowercase letter</div>
+              <div id="password-criteria-upper" style="display:flex;align-items:center;gap:8px;"><span>✕</span>Uppercase letter</div>
+              <div id="password-criteria-number" style="display:flex;align-items:center;gap:8px;"><span>✕</span>Number</div>
+              <div id="password-criteria-special" style="display:flex;align-items:center;gap:8px;"><span>✕</span>Special character (!@#$%^&*)</div>
+              <div id="password-verified" style="color:#228B22;font-weight:700;margin-top:8px;display:none;">✓ Password verified</div>
+            </div>
+            <div id="password-error" style="color:#b22222;font-size:12px;margin-top:4px;display:none;"></div>
           </div>
 
           <button type="submit" class="button" style="width:100%;margin-top:8px;">Create account</button>
